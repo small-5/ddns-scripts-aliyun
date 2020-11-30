@@ -127,13 +127,13 @@ aliyun_transfer(){
 	done
 	__ERR=`jsonfilter -s "$__TMP" -e "@.Code"`
 	[ -z "$__ERR" ] && return 0
-	if [ "$__ERR" = LastOperationNotFinished ];then
-		printf "%s\n" " $(date +%H%M%S)       : 最后一次操作未完成,3秒后重试" >> $LOGFILE
-		return 1
-	fi
-	[ "$__ERR" = InvalidAccessKeyId.NotFound ] && __ERR="无效AccessKey ID"
-	[ "$__ERR" = SignatureDoesNotMatch ] && __ERR="无效AccessKey Secret"
-	[ "$__ERR" = InvalidDomainName.NoExist ] && __ERR="无效域名"
+	case $__ERR in
+		LastOperationNotFinished)printf "%s\n" " $(date +%H%M%S)       : 最后一次操作未完成,2秒后重试" >> $LOGFILE;return 1;;
+		InvalidTimeStamp.Expired)printf "%s\n" " $(date +%H%M%S)       : 时间戳错误,2秒后重试" >> $LOGFILE;return 1;;
+		InvalidAccessKeyId.NotFound)__ERR="无效AccessKey ID";;
+		SignatureDoesNotMatch)__ERR="无效AccessKey Secret";;
+		InvalidDomainName.NoExist)__ERR="无效域名";;
+	esac
 	local A="$(date +%H%M%S) ERROR : [$__ERR] - 终止进程"
 	logger -p user.err -t ddns-scripts[$$] $SECTION_ID: ${A:15}
 	printf "%s\n" " $A" >> $LOGFILE
